@@ -1,0 +1,26 @@
+{
+  "name": "छठ पूजा 2026 — दिन-वार गीत",
+  "short_name": "छठ पूजा 2026",
+  "description": "छठ महापर्व 2026 के चारों दिनों के भक्ति गीतों का संग्रह — नहाय-खाय, खरना, संध्या अर्घ्य, उषा अर्घ्य और पारण।",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdf3e2",
+  "theme_color": "#7a1f2b",
+  "lang": "hi",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
