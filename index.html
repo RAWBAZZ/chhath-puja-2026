@@ -230,6 +230,25 @@
 @keyframes musicFloat{50%{transform:translateY(-8px) rotate(12deg)}}
 @keyframes musicPulse{50%{transform:scale(1.06)}}
 @media(prefers-reduced-motion:reduce){.local-music,.local-music:before,.music-choice-icon,.youtube-item{animation:none}}
+
+/* Apple-inspired music player, scoped only to imported audio */
+.apple-player{margin:14px 0 16px;padding:22px 18px 18px;border-radius:25px;background:linear-gradient(160deg,#332331 0%,#6c2839 55%,#301e31 100%);color:#fff;box-shadow:0 18px 32px rgba(65,24,41,.23);overflow:hidden}
+.apple-art{height:155px;max-width:230px;margin:0 auto 16px;border-radius:18px;background:linear-gradient(135deg,#e6b97e,#9d4553 45%,#411e36);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 26px rgba(0,0,0,.24);position:relative}
+.apple-art>span{font-size:72px;color:#fff4dd;text-shadow:0 5px 18px rgba(0,0,0,.25)}
+.apple-disc{position:absolute;width:66px;height:66px;border:2px solid rgba(255,255,255,.14);border-radius:50%;animation:appleSpin 9s linear infinite;animation-play-state:paused}
+.apple-player.is-playing .apple-disc{animation-play-state:running}
+.apple-now{text-align:center;display:flex;flex-direction:column;gap:3px}.apple-eyebrow{font-size:10px;letter-spacing:.19em;color:#eac6a5;font-weight:700}
+#localNowTitle{font-size:19px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#localNowSubtitle{font-size:12px;color:#e4c8c6}
+.apple-progress{margin-top:20px}.apple-progress input{display:block;width:100%;height:5px;margin:0;accent-color:#f6d1aa;cursor:pointer}
+.apple-times{display:flex;justify-content:space-between;font-size:11px;color:#e7c8c5;margin-top:8px;font-variant-numeric:tabular-nums}
+.apple-transport{display:flex;align-items:center;justify-content:space-around;gap:4px;margin-top:11px}
+.apple-transport button{border:0;background:transparent;color:#fff;font-size:21px;min-width:43px;height:48px;border-radius:50%;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.apple-transport button small{font-size:10px;line-height:8px;font-weight:700}
+.apple-transport #localPlay{background:#fff4e7;color:#5b2538;font-size:26px;width:59px;height:59px;box-shadow:0 4px 14px rgba(0,0,0,.22)}
+.apple-transport button:active{transform:scale(.94)}.apple-transport button:disabled{opacity:.35}
+.local-settings{justify-content:center}
+@keyframes appleSpin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.apple-disc{animation:none}}
 </style>
 </head>
 <body>
@@ -238,7 +257,7 @@
 <h2>🎵 मेरा संगीत · My Music</h2>
 <p class="local-note">Choose how you want to listen — songs from your phone or YouTube links.</p>
 <div class="music-choice"><span class="music-choice-icon">🎧</span><div><strong>Import from Device</strong><small>Play MP3, M4A and other supported audio</small></div></div><label class="local-import" for="localFiles">＋ Choose Audio Files<input id="localFiles" type="file" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.flac" multiple></label>
-<div class="local-controls"><button id="localPrev" aria-label="Previous track">⏮</button><button id="localPlay" aria-label="Play or pause">▶</button><button id="localNext" aria-label="Next track">⏭</button><select id="localMode" aria-label="Transition mode"><option value="normal">Normal</option><option value="crossfade">Crossfade</option><option value="automix">AutoMix (beta)</option></select></div>
+<div class="apple-player" aria-label="Imported music player"><div class="apple-art"><span>♫</span><div class="apple-disc"></div></div><div class="apple-now"><span class="apple-eyebrow">NOW PLAYING · MY MUSIC</span><strong id="localNowTitle">Choose a song</strong><span id="localNowSubtitle">Your personal music collection</span></div><div class="apple-progress"><input type="range" id="localSeek" min="0" max="1000" value="0" aria-label="Seek through song"><div class="apple-times"><span id="localElapsed">0:00</span><span id="localDuration">0:00</span></div></div><div class="apple-transport"><button id="localPrev" aria-label="Previous track">⏮</button><button id="localBack" aria-label="Rewind 10 seconds"><span>↶</span><small>10</small></button><button id="localPlay" aria-label="Play or pause">▶</button><button id="localForward" aria-label="Fast forward 10 seconds"><span>↷</span><small>10</small></button><button id="localNext" aria-label="Next track">⏭</button></div></div><div class="local-controls local-settings"><select id="localMode" aria-label="Transition mode"><option value="normal">Normal</option><option value="crossfade">Crossfade</option><option value="automix">AutoMix (beta)</option></select></div>
 <div class="local-controls"><label for="localFade">Fade: <span id="localFadeValue">6s</span></label><input id="localFade" type="range" min="1" max="12" value="6"><label><input id="localShuffle" type="checkbox"> Shuffle</label></div>
 <div class="music-choice youtube-choice"><span class="music-choice-icon">▶</span><div><strong>Play from YouTube</strong><small>Paste a song or playlist link and play here</small></div></div><div class="local-controls"><input id="youtubeLink" type="url" placeholder="Paste YouTube video or playlist URL" aria-label="YouTube URL" style="flex:1;min-width:160px;padding:9px;border:1px solid #e5c7ac;border-radius:9px"><button id="youtubeAdd" type="button">▶ Play Link</button></div><div id="youtubeStatus" class="local-status" role="status"></div><div id="youtubeCustom"></div>
 <div id="localStatus" class="local-status" role="status" aria-live="polite"></div><div id="localTracks"></div>
@@ -484,12 +503,19 @@ let songs=[],index=-1,slot=0,transitioning=false,fadeTimer=null,watchTimer=null,
 const mode=$('localMode'),fade=$('localFade'),play=$('localPlay');
 try{mode.value=localStorage.getItem('chhathMusicMode')||'normal';fade.value=localStorage.getItem('chhathFade')||'6';}catch(e){}
 function msg(t){status.textContent=t}
+const seek=$('localSeek');let seeking=false;
+function timeLabel(t){if(!Number.isFinite(t)||t<0)return '0:00';const v=Math.floor(t);return Math.floor(v/60)+':'+String(v%60).padStart(2,'0')}
+function syncProgress(){const x=a[slot],d=x.duration,valid=Number.isFinite(d)&&d>0;if(!seeking)seek.value=valid?String(Math.round(x.currentTime/d*1000)):'0';seek.disabled=index<0||!valid;$('localElapsed').textContent=timeLabel(x.currentTime);$('localDuration').textContent=timeLabel(d);$('localNowTitle').textContent=index>=0&&songs[index]?songs[index].name:'Choose a song';$('localNowSubtitle').textContent=index>=0?'Imported from your device':'Your personal music collection';$('localMusic').querySelector('.apple-player').classList.toggle('is-playing',index>=0&&!x.paused)}
+seek.addEventListener('input',()=>{seeking=true;const d=a[slot].duration;if(Number.isFinite(d))$('localElapsed').textContent=timeLabel(d*Number(seek.value)/1000)});
+seek.addEventListener('change',()=>{const x=a[slot],d=x.duration;if(Number.isFinite(d)&&d>0){x.currentTime=d*Number(seek.value)/1000}seeking=false;syncProgress()});
+function skipSeconds(seconds){if(index<0)return;const x=a[slot],d=x.duration;if(!Number.isFinite(d)||d<=0)return;if(transitioning){clearFade();a[1-slot].pause();a[1-slot].volume=1;x.volume=1}x.currentTime=Math.max(0,Math.min(d-.05,x.currentTime+seconds));syncProgress()}
+$('localBack').onclick=()=>skipSeconds(-10);$('localForward').onclick=()=>skipSeconds(10);
 function mediaInfo(){if(!('mediaSession' in navigator)||index<0||!songs[index])return;try{navigator.mediaSession.metadata=new MediaMetadata({title:songs[index].name,artist:'My Music',album:'छठ पूजा 2026'});navigator.mediaSession.playbackState=a[slot].paused?'paused':'playing'}catch(e){}}
-if('mediaSession' in navigator){const actions={play:()=>{a[slot].play().then(()=>{paint();mediaInfo()}).catch(()=>{})},pause:()=>{a[slot].pause();paint();mediaInfo()},previoustrack:()=>start((index-1+songs.length)%songs.length),nexttrack:()=>start(nextIndex())};for(const [action,handler] of Object.entries(actions)){try{navigator.mediaSession.setActionHandler(action,handler)}catch(e){}}}
+if('mediaSession' in navigator){const actions={play:()=>{a[slot].play().then(()=>{paint();mediaInfo()}).catch(()=>{})},pause:()=>{a[slot].pause();paint();mediaInfo()},previoustrack:()=>start((index-1+songs.length)%songs.length),nexttrack:()=>start(nextIndex()),seekbackward:(details)=>skipSeconds(-(details.seekOffset||10)),seekforward:(details)=>skipSeconds(details.seekOffset||10)};for(const [action,handler] of Object.entries(actions)){try{navigator.mediaSession.setActionHandler(action,handler)}catch(e){}}}
 function clearFade(){if(fadeTimer){clearInterval(fadeTimer);fadeTimer=null}transitioning=false}
 function stop(){playToken++;clearFade();a.forEach(x=>{x.pause();x.volume=1;x.removeAttribute('src');x.load()})}
 function nextIndex(){if(!songs.length)return -1;if($('localShuffle').checked&&songs.length>1){let n;do{n=Math.floor(Math.random()*songs.length)}while(n===index);return n}return (index+1)%songs.length}
-function paint(){tracks.replaceChildren();songs.forEach((s,i)=>{const row=document.createElement('div');row.className='local-track'+(i===index?' active':'');const b=document.createElement('button');b.className='local-name';b.textContent=(i===index?'♫ ':'▶ ')+s.name;b.onclick=()=>start(i);const del=document.createElement('button');del.textContent='✕';del.setAttribute('aria-label','Remove '+s.name);del.onclick=()=>remove(i);row.append(b,del);tracks.append(row)});play.textContent=index>=0&&!a[slot].paused?'⏸':'▶';$('localPrev').disabled=$('localNext').disabled=!songs.length}
+function paint(){tracks.replaceChildren();songs.forEach((s,i)=>{const row=document.createElement('div');row.className='local-track'+(i===index?' active':'');const b=document.createElement('button');b.className='local-name';b.textContent=(i===index?'♫ ':'▶ ')+s.name;b.onclick=()=>start(i);const del=document.createElement('button');del.textContent='✕';del.setAttribute('aria-label','Remove '+s.name);del.onclick=()=>remove(i);row.append(b,del);tracks.append(row)});play.textContent=index>=0&&!a[slot].paused?'⏸':'▶';$('localPrev').disabled=$('localNext').disabled=!songs.length;$('localBack').disabled=$('localForward').disabled=index<0;syncProgress()}
 function duration(){return Number(fade.value)||6}
 function effectiveFade(){if(mode.value==='normal')return 0;const d=a[slot].duration;if(!Number.isFinite(d))return 0;return Math.min(mode.value==='automix'?Math.max(2,Math.min(9,d*.045)):duration(),Math.max(0,d/3))}
 async function start(i){if(i<0||i>=songs.length)return;stop();index=i;slot=0;const token=playToken;const x=a[0];x.src=songs[i].url;x.volume=1;try{await x.play();if(token!==playToken)return;msg('Playing: '+songs[i].name);mediaInfo()}catch(e){if(token===playToken)msg('Tap Play to start audio, or choose another supported file.')}paint()}
@@ -504,7 +530,7 @@ a.forEach((x,k)=>{x.addEventListener('ended',()=>{if(k!==slot||transitioning)ret
 watchTimer=setInterval(()=>{if(document.hidden||index<0||transitioning||mode.value==='normal'||a[slot].paused)return;const x=a[slot],seconds=effectiveFade();if(seconds>0&&Number.isFinite(x.duration)&&x.duration-x.currentTime<=seconds+.12)mix()},150);
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&transitioning){const outgoing=a[slot],incoming=a[1-slot];clearFade();outgoing.pause();outgoing.removeAttribute('src');outgoing.load();incoming.volume=1;slot=1-slot;index=nextIndexFromAudio(incoming);paint();mediaInfo()}else if(!document.hidden){paint();mediaInfo()}});
 function nextIndexFromAudio(audio){const i=songs.findIndex(s=>s.url===audio.src);return i>=0?i:index}
-a.forEach(x=>{x.addEventListener('play',mediaInfo);x.addEventListener('pause',mediaInfo)});paint();msg('Import music from your device to begin.');
+a.forEach(x=>{x.addEventListener('play',()=>{mediaInfo();syncProgress()});x.addEventListener('pause',()=>{mediaInfo();syncProgress()});x.addEventListener('timeupdate',syncProgress);x.addEventListener('loadedmetadata',syncProgress);x.addEventListener('durationchange',syncProgress)});paint();msg('Import music from your device to begin.');
 })();
 </script>
 </body>
